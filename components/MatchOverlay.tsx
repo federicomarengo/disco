@@ -10,8 +10,8 @@ interface MatchOverlayProps {
   onClose: () => void
 }
 
-export default function MatchOverlay({ profile, myEmail, onClose }: MatchOverlayProps) {
-  const myInitial = myEmail.charAt(0).toUpperCase()
+export default function MatchOverlay({ onClose, profile }: MatchOverlayProps) {
+  const myInitial = '🔥'
 
   return (
     <motion.div
@@ -72,7 +72,7 @@ export default function MatchOverlay({ profile, myEmail, onClose }: MatchOverlay
         >
           {/* My avatar */}
           <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center">
-            <span className="text-4xl font-bold text-white">{myInitial}</span>
+            <span className="text-5xl">{myInitial}</span>
           </div>
 
           <div className="text-white text-3xl font-black">💘</div>
