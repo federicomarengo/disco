@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, X, Flame } from 'lucide-react'
 import SwipeCard from '@/components/SwipeCard'
@@ -21,6 +22,7 @@ function mockToDmUser(p: typeof mockProfiles[0]): DmUser {
 }
 
 export default function FeedPage() {
+  const router = useRouter()
   const [userId, setUserId] = useState('')
   const [profiles, setProfiles] = useState<DmUser[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -78,18 +80,15 @@ export default function FeedPage() {
     <div className="h-full flex flex-col bg-[#0d0d0f]">
 
       {/* Header */}
-      <div className="flex items-center justify-center px-5 pt-12 pb-4 flex-shrink-0 relative">
+      <div className="flex items-center justify-between px-5 pt-12 pb-4 flex-shrink-0">
+        <button onClick={() => router.push('/')} className="text-gray-500 text-sm">← Inicio</button>
         <div className="flex items-center gap-2">
-          <Flame size={20} className="text-rose-500" />
-          <span className="font-bold text-white text-base">DiscoMatch</span>
+          <Flame size={18} className="text-rose-500" />
+          <span className="font-black text-white text-base tracking-tight">DiscoMatch</span>
         </div>
-      </div>
-
-      {/* Event pill */}
-      <div className="flex justify-center pb-4 flex-shrink-0">
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#16161a] border border-[#2a2a30]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs text-gray-400 font-medium">Evento de esta noche</span>
+          <span className="text-emerald-400 text-[10px] font-medium">Live</span>
         </div>
       </div>
 
