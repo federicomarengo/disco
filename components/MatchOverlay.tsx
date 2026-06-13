@@ -2,10 +2,10 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Profile } from '@/lib/profiles'
+import { DmUser } from '@/lib/db'
 
 interface MatchOverlayProps {
-  profile: Profile
+  profile: DmUser
   myEmail: string
   onClose: () => void
 }
@@ -78,8 +78,11 @@ export default function MatchOverlay({ profile, myEmail, onClose }: MatchOverlay
           <div className="text-white text-3xl font-black">💘</div>
 
           {/* Match avatar */}
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden relative">
-            <Image src={profile.photo} alt={profile.name} fill className="object-cover" />
+          <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden relative bg-gradient-to-br from-rose-400 to-purple-600 flex items-center justify-center">
+            {profile.photo_url
+              ? <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" />
+              : <span className="text-4xl font-bold text-white">{profile.name?.charAt(0).toUpperCase()}</span>
+            }
           </div>
         </motion.div>
 

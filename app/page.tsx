@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { joinEvent } from '@/lib/db'
 
 export default function LandingPage() {
   const [email, setEmail] = useState('')
@@ -10,7 +11,7 @@ export default function LandingPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = email.trim().toLowerCase()
     if (!trimmed.includes('@') || !trimmed.includes('.')) {
@@ -19,15 +20,23 @@ export default function LandingPage() {
     }
     setError('')
     setLoading(true)
+
+    const result = await joinEvent(trimmed)
+    if (!result) {
+      setError('No se pudo conectar. Intentá de nuevo.')
+      setLoading(false)
+      return
+    }
+
+    localStorage.setItem('dm_user_id', result.user.id)
     localStorage.setItem('dm_email', trimmed)
-    localStorage.setItem('dm_name', trimmed.split('@')[0])
-    setTimeout(() => router.push('/feed'), 600)
+    localStorage.setItem('dm_event_id', result.eventId)
+    router.push('/feed')
   }
 
   return (
     <div className="h-full flex flex-col items-center justify-between px-6 py-12 bg-[#0d0d0f]">
 
-      {/* Top decoration */}
       <div className="w-full flex justify-center pt-8">
         <div className="relative">
           <div className="absolute inset-0 blur-3xl opacity-30 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full scale-150" />
@@ -42,7 +51,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Center content */}
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -74,9 +82,7 @@ export default function LandingPage() {
                 transition-colors
               "
             />
-            {error && (
-              <p className="text-rose-400 text-sm pl-1">{error}</p>
-            )}
+            {error && <p className="text-rose-400 text-sm pl-1">{error}</p>}
           </div>
 
           <motion.button
@@ -100,11 +106,10 @@ export default function LandingPage() {
         </p>
       </motion.div>
 
-      {/* Bottom badge */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2a2a30] text-xs text-gray-500">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          234 personas van esta noche
+          Esta noche en el lugar
         </div>
       </div>
 

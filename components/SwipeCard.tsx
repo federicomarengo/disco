@@ -1,12 +1,11 @@
 'use client'
 
-import { useRef } from 'react'
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
 import Image from 'next/image'
-import { Profile } from '@/lib/profiles'
+import { DmUser } from '@/lib/db'
 
 interface SwipeCardProps {
-  profile: Profile
+  profile: DmUser
   onSwipe: (direction: 'like' | 'pass') => void
   isTop: boolean
   stackIndex: number
@@ -19,11 +18,8 @@ export default function SwipeCard({ profile, onSwipe, isTop, stackIndex }: Swipe
   const passOpacity = useTransform(x, [-100, -20], [1, 0])
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.x > 90) {
-      onSwipe('like')
-    } else if (info.offset.x < -90) {
-      onSwipe('pass')
-    }
+    if (info.offset.x > 90) onSwipe('like')
+    else if (info.offset.x < -90) onSwipe('pass')
   }
 
   const scale = 1 - stackIndex * 0.04
@@ -33,15 +29,14 @@ export default function SwipeCard({ profile, onSwipe, isTop, stackIndex }: Swipe
     return (
       <div
         className="absolute inset-0 rounded-3xl overflow-hidden"
-        style={{
-          transform: `scale(${scale}) translateY(${yOffset}px)`,
-          zIndex: 10 - stackIndex,
-        }}
+        style={{ transform: `scale(${scale}) translateY(${yOffset}px)`, zIndex: 10 - stackIndex }}
       >
         <div className="w-full h-full bg-[#16161a] rounded-3xl border border-[#2a2a30]" />
       </div>
     )
   }
+
+  const initial = profile.name?.charAt(0).toUpperCase() ?? '?'
 
   return (
     <motion.div
@@ -53,19 +48,25 @@ export default function SwipeCard({ profile, onSwipe, isTop, stackIndex }: Swipe
       onDragEnd={handleDragEnd}
       whileDrag={{ scale: 1.03 }}
     >
-      {/* Card */}
       <div className="w-full h-full rounded-3xl overflow-hidden relative shadow-2xl border border-white/5">
-        {/* Photo */}
-        <Image
-          src={profile.photo}
-          alt={profile.name}
-          fill
-          className="object-cover"
-          priority
-          draggable={false}
-        />
 
-        {/* Bottom gradient */}
+        {/* Photo or gradient fallback */}
+        {profile.photo_url ? (
+          <Image
+            src={profile.photo_url}
+            alt={profile.name}
+            fill
+            className="object-cover"
+            priority
+            draggable={false}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+            <span className="text-8xl font-black text-white/20">{initial}</span>
+          </div>
+        )}
+
+        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
         {/* LIKE badge */}
@@ -88,21 +89,23 @@ export default function SwipeCard({ profile, onSwipe, isTop, stackIndex }: Swipe
         <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
           <div className="flex items-end gap-3">
             <h2 className="text-3xl font-bold text-white">{profile.name}</h2>
-            <span className="text-2xl font-light text-white/80 mb-0.5">{profile.age}</span>
+            {profile.age && <span className="text-2xl font-light text-white/80 mb-0.5">{profile.age}</span>}
           </div>
 
-          <p className="text-sm text-white/75 leading-relaxed">{profile.bio}</p>
+          {profile.bio && <p className="text-sm text-white/75 leading-relaxed">{profile.bio}</p>}
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            {profile.interests.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-sm border border-white/10"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+          {profile.interests?.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {profile.interests.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-sm border border-white/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

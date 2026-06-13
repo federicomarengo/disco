@@ -6,51 +6,46 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, X, Flame, ChevronLeft } from 'lucide-react'
 import SwipeCard from '@/components/SwipeCard'
 import MatchOverlay from '@/components/MatchOverlay'
-import { mockProfiles, Profile } from '@/lib/profiles'
+import { getEventFeed, recordSwipe, DmUser } from '@/lib/db'
 
 export default function FeedPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
-  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [userId, setUserId] = useState('')
+  const [eventId, setEventId] = useState('')
+  const [profiles, setProfiles] = useState<DmUser[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [match, setMatch] = useState<Profile | null>(null)
-  const [likeAnim, setLikeAnim] = useState(false)
-  const [passAnim, setPassAnim] = useState(false)
-  const [swipedCount, setSwipedCount] = useState(0)
+  const [match, setMatch] = useState<DmUser | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('dm_email')
-    if (!stored) { router.replace('/'); return }
-    setEmail(stored)
-    setProfiles([...mockProfiles])
+    const uid = localStorage.getItem('dm_user_id')
+    const eid = localStorage.getItem('dm_event_id')
+    const em = localStorage.getItem('dm_email')
+    if (!uid || !eid) { router.replace('/'); return }
+    setUserId(uid)
+    setEventId(eid)
+    setEmail(em ?? '')
+
+    getEventFeed(uid, eid).then(data => {
+      setProfiles(data)
+      setLoading(false)
+    })
   }, [router])
 
   const current = profiles[currentIndex]
   const next = profiles[currentIndex + 1]
   const afterNext = profiles[currentIndex + 2]
 
-  const handleSwipe = useCallback((direction: 'like' | 'pass') => {
+  const handleSwipe = useCallback(async (direction: 'like' | 'pass') => {
     if (!current) return
-
-    if (direction === 'like') {
-      setLikeAnim(true)
-      setTimeout(() => setLikeAnim(false), 600)
-      if (current.willMatch) {
-        setTimeout(() => setMatch(current), 400)
-      }
-    } else {
-      setPassAnim(true)
-      setTimeout(() => setPassAnim(false), 600)
-    }
-
-    setSwipedCount(c => c + 1)
     setCurrentIndex(i => i + 1)
-  }, [current])
 
-  const handleLikeButton = () => handleSwipe('like')
-  const handlePassButton = () => handleSwipe('pass')
+    const isMatch = await recordSwipe(userId, current.id, eventId, direction)
+    if (isMatch) setMatch(current)
+  }, [current, userId, eventId])
 
-  const done = currentIndex >= profiles.length
+  const done = !loading && currentIndex >= profiles.length
 
   return (
     <div className="h-full flex flex-col bg-[#0d0d0f]">
@@ -78,49 +73,35 @@ export default function FeedPage() {
       <div className="flex justify-center pb-4 flex-shrink-0">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#16161a] border border-[#2a2a30]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs text-gray-400 font-medium">Evento de esta noche · 234 personas</span>
+          <span className="text-xs text-gray-400 font-medium">Evento de esta noche</span>
         </div>
       </div>
 
       {/* Card stack */}
       <div className="flex-1 px-5 relative min-h-0">
-        {done ? (
+        {loading ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="space-y-3 text-center">
+              <div className="w-10 h-10 border-2 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-gray-500 text-sm">Cargando perfiles...</p>
+            </div>
+          </div>
+        ) : done ? (
           <div className="h-full flex flex-col items-center justify-center gap-6 text-center px-8">
             <div className="text-6xl">🎉</div>
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-white">¡Viste a todos!</h2>
-              <p className="text-gray-500 text-sm">
-                Tuviste {swipedCount} perfiles esta noche
-              </p>
+              <p className="text-gray-500 text-sm">Seguí disfrutando la noche</p>
             </div>
-            <button
-              onClick={() => { setCurrentIndex(0); setSwipedCount(0) }}
-              className="px-8 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-purple-600 text-white font-semibold text-sm"
-            >
-              Volver a empezar
-            </button>
           </div>
         ) : (
           <div className="relative h-full">
-            {/* Stack: render up to 3 cards */}
             <AnimatePresence>
               {afterNext && (
-                <SwipeCard
-                  key={afterNext.id}
-                  profile={afterNext}
-                  onSwipe={handleSwipe}
-                  isTop={false}
-                  stackIndex={2}
-                />
+                <SwipeCard key={afterNext.id} profile={afterNext} onSwipe={handleSwipe} isTop={false} stackIndex={2} />
               )}
               {next && (
-                <SwipeCard
-                  key={next.id}
-                  profile={next}
-                  onSwipe={handleSwipe}
-                  isTop={false}
-                  stackIndex={1}
-                />
+                <SwipeCard key={next.id} profile={next} onSwipe={handleSwipe} isTop={false} stackIndex={1} />
               )}
               {current && (
                 <motion.div
@@ -128,18 +109,9 @@ export default function FeedPage() {
                   className="absolute inset-0"
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{
-                    x: likeAnim ? 300 : passAnim ? -300 : 0,
-                    opacity: 0,
-                    transition: { duration: 0.3 },
-                  }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 >
-                  <SwipeCard
-                    profile={current}
-                    onSwipe={handleSwipe}
-                    isTop={true}
-                    stackIndex={0}
-                  />
+                  <SwipeCard profile={current} onSwipe={handleSwipe} isTop={true} stackIndex={0} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -147,12 +119,12 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Action buttons */}
-      {!done && (
+      {/* Buttons */}
+      {!loading && !done && (
         <div className="flex items-center justify-center gap-6 py-8 flex-shrink-0">
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={handlePassButton}
+            onClick={() => handleSwipe('pass')}
             className="w-16 h-16 rounded-full bg-[#16161a] border border-[#2a2a30] flex items-center justify-center shadow-lg"
           >
             <X size={28} className="text-rose-400" />
@@ -160,7 +132,7 @@ export default function FeedPage() {
 
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={handleLikeButton}
+            onClick={() => handleSwipe('like')}
             className="w-20 h-20 rounded-full flex items-center justify-center shadow-xl"
             style={{ background: 'linear-gradient(135deg, #f43f5e, #a855f7)' }}
           >
@@ -169,7 +141,6 @@ export default function FeedPage() {
 
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => {}}
             className="w-16 h-16 rounded-full bg-[#16161a] border border-[#2a2a30] flex items-center justify-center shadow-lg"
           >
             <Flame size={24} className="text-amber-400" />
@@ -177,14 +148,9 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* Match overlay */}
       <AnimatePresence>
         {match && (
-          <MatchOverlay
-            profile={match}
-            myEmail={email}
-            onClose={() => setMatch(null)}
-          />
+          <MatchOverlay profile={match} myEmail={email} onClose={() => setMatch(null)} />
         )}
       </AnimatePresence>
     </div>
