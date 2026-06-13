@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { DmUser } from '@/lib/db'
@@ -13,6 +14,16 @@ interface MatchOverlayProps {
 
 export default function MatchOverlay({ onClose, profile }: MatchOverlayProps) {
   const router = useRouter()
+
+  useEffect(() => {
+    const stored = localStorage.getItem('dm_matches')
+    const matches = stored ? JSON.parse(stored) : []
+    const exists = matches.find((m: {profileId: string}) => m.profileId === profile.id)
+    if (!exists) {
+      matches.unshift({ profileId: profile.id, matchedAt: new Date().toISOString() })
+      localStorage.setItem('dm_matches', JSON.stringify(matches))
+    }
+  }, [profile.id])
 
   const goToChat = () => {
     onClose()

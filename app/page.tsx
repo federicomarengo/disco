@@ -149,6 +149,13 @@ export default function LandingPage() {
             Quiero participar esta noche →
           </motion.button>
 
+          <button
+            onClick={() => router.push('/totem')}
+            className="w-full py-3 rounded-2xl font-semibold text-sm text-gray-300 border border-[#2a2a30] bg-[#16161a] flex items-center justify-center gap-2"
+          >
+            🍸 Pedir una bebida sin hacer fila
+          </button>
+
           <p className="text-center text-xs text-gray-600">
             Sin descarga · Sin contraseña · Perfil solo por esta noche
           </p>

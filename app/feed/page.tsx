@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, X, Flame } from 'lucide-react'
+import { Heart, X, Flame, Map, MessageCircle } from 'lucide-react'
 import SwipeCard from '@/components/SwipeCard'
 import MatchOverlay from '@/components/MatchOverlay'
 import { getEventFeed, recordSwipe, DmUser } from '@/lib/db'
@@ -81,15 +81,23 @@ export default function FeedPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-12 pb-4 flex-shrink-0">
-        <button onClick={() => router.push('/')} className="text-gray-500 text-sm">← Inicio</button>
+        <button
+          onClick={() => router.push('/mapa')}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-[#16161a] border border-[#2a2a30]"
+        >
+          <Map size={16} className="text-gray-400" />
+        </button>
         <div className="flex items-center gap-2">
           <Flame size={18} className="text-rose-500" />
           <span className="font-black text-white text-base tracking-tight">DiscoMatch</span>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-emerald-400 text-[10px] font-medium">Live</span>
-        </div>
+        <button
+          onClick={() => router.push('/matches')}
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-rose-500/10 border border-rose-500/20 relative"
+        >
+          <MessageCircle size={16} className="text-rose-400" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">2</span>
+        </button>
       </div>
 
       {/* Card stack */}
